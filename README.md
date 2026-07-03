@@ -1,113 +1,133 @@
-# Handwritten Digit Recognizer
+Handwritten Digit Recognizer
 
-Draw a digit with your mouse and a neural network (trained on MNIST) predicts
-it live as you draw.
+A neural network that recognizes handwritten digits (0–9) in real time. Draw
+on the canvas and watch the prediction update live as you write — powered by
+a TensorFlow/Keras model trained on MNIST, wrapped in a Tkinter desktop app,
+and fully containerized with Docker.
 
-## Project files
+Demo
 
-- `train_model.py` — trains the neural network on MNIST, saves `digit_model.keras`
-- `digit_recognizer.py` — Tkinter app: draw a digit, see a live prediction
-- `digit_model.keras` — the trained model (already included, no need to retrain)
-- `requirements.txt` — Python dependencies
-- `Dockerfile` — containerizes the app
 
-## Run it locally (no Docker)
+Draw a digit → the model predicts it instantly, with a confidence score.
 
-```bash
-pip install -r requirements.txt
+
+
+(Add a screenshot or GIF of the app here once you have one — drag an image
+into this README on GitHub and it'll generate the markdown for you.)
+
+Features
+
+
+Live prediction — no button click needed, the model predicts as you draw
+Smooth strokes — connected line drawing instead of dotted output
+Auto-centering preprocessing — crops, centers, and pads your drawing to
+match the MNIST format the model was trained on, for much better accuracy
+Dockerized — run it in a container with no local Python setup required
+
+
+Tech stack
+
+LayerToolModelTensorFlow / Keras (Dense neural network)Training dataMNIST (60,000 handwritten digit images)GUIPython TkinterImage processingPillow (PIL)ContainerizationDocker / Docker Compose
+
+Project structure
+
+digit-recognizer/
+├── train_model.py       # Trains the neural network on MNIST, saves digit_model.keras
+├── digit_recognizer.py  # Tkinter app: draw a digit, get a live prediction
+├── digit_model.keras    # Pre-trained model (included, no need to retrain)
+├── requirements.txt     # Python dependencies
+├── Dockerfile           # Container image definition
+├── docker-compose.yml   # Compose config (Linux/macOS display forwarding)
+└── README.md
+
+How it works
+
+User draws on canvas
+        ↓
+Drawing mirrored into a Pillow image (Tkinter can't be read as pixels directly)
+        ↓
+Crop to the drawing's bounding box
+        ↓
+Pad to a square + add margin (centers the digit, matching MNIST's format)
+        ↓
+Resize to 28x28, normalize pixel values to [0, 1]
+        ↓
+Neural network inference
+        ↓
+Predicted digit + confidence, updated live
+
+The centering/padding step matters more than it might seem — without it, a
+digit drawn off-center or with a different aspect ratio than training data
+gets misclassified with high (and misleading) confidence.
+
+Getting started
+
+Option 1 — Run locally with Python
+
+bashpip install -r requirements.txt
 python digit_recognizer.py
-```
 
-## Run it with Docker
+(digit_model.keras is already included — no need to run train_model.py
+unless you want to retrain it yourself.)
 
-Tkinter opens a GUI window, and a Docker container has no display by
-default. You need to forward your host machine's display into the
-container. Steps differ slightly by OS.
+Option 2 — Run with Docker
 
-### Build the image (same on every OS)
+Tkinter opens a GUI window, and Docker containers have no display by
+default, so you need to forward your host's display into the container.
 
-```bash
-docker build -t digit-recognizer .
-```
+Build the image:
 
-### Linux
+bashdocker build -t digit-recognizer .
 
-```bash
-xhost +local:docker
+Linux:
+
+bashxhost +local:docker
 docker run -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix digit-recognizer
-```
 
-### macOS
+macOS (requires XQuartz, with "Allow
+connections from network clients" enabled in its preferences):
 
-1. Install [XQuartz](https://www.xquartz.org/) and open it once.
-2. In XQuartz preferences → Security, enable "Allow connections from network clients".
-3. Then:
-
-```bash
-xhost + 127.0.0.1
+bashxhost + 127.0.0.1
 docker run -e DISPLAY=host.docker.internal:0 digit-recognizer
-```
 
-### Windows
+Windows (requires VcXsrv,
+launched via XLaunch with "Disable access control" checked):
 
-1. Install [VcXsrv](https://sourceforge.net/projects/vcxsrv/) and launch it
-   with "Disable access control" checked.
-2. Then, in PowerShell:
+powershelldocker run -e DISPLAY=host.docker.internal:0.0 digit-recognizer
 
-```powershell
-docker run -e DISPLAY=host.docker.internal:0.0 digit-recognizer
-```
+Option 3 — Docker Compose (Linux/macOS)
 
-If the window doesn't appear, the display forwarding is almost always the
-cause — double check the DISPLAY value and that the X server (XQuartz/VcXsrv)
-is actually running before `docker run`.
-
-## Run it with Docker Compose
-
-Compose doesn't remove the display-forwarding requirement above — it just
-saves you from typing the `-e`/`-v` flags every time. `docker-compose.yml`
-reads `DISPLAY` from your shell's environment variable, so export it first.
-
-### Linux
-
-```bash
-xhost +local:docker
-export DISPLAY=$DISPLAY
+bashxhost +local:docker      # or `xhost + 127.0.0.1` on macOS
+export DISPLAY=$DISPLAY  # or host.docker.internal:0 on macOS
 docker compose up --build
-```
 
-### macOS
 
-1. Install and open [XQuartz](https://www.xquartz.org/); enable "Allow
-   connections from network clients" in its Security preferences.
-2. Then:
+Note: the included docker-compose.yml uses the Linux/macOS X11
+socket path and isn't compatible with Windows as-is. On Windows, use the
+docker run command above instead.
 
-```bash
-xhost + 127.0.0.1
-export DISPLAY=host.docker.internal:0
-docker compose up --build
-```
 
-### Windows
 
-`docker-compose.yml` as written uses the Linux/macOS X11 socket path, which
-doesn't exist on Windows. Simplest option: skip Compose on Windows and use
-the plain `docker run` command above with VcXsrv running. (If you want a
-Compose file that works on Windows too, tell me and I'll add an
-`environment`-only version without the `/tmp/.X11-unix` volume mount.)
+Retraining the model
 
-To stop the container: `docker compose down`
+If you want to retrain from scratch (e.g. with a different architecture or
+more epochs):
 
-## Push to GitHub
+bashpython train_model.py
 
-```bash
-git init
-git add .
-git commit -m "Handwritten digit recognizer with live prediction"
-git branch -M main
-git remote add origin https://github.com/<your-username>/<your-repo-name>.git
-git push -u origin main
-```
+This downloads MNIST, trains a small neural network for 5 epochs, evaluates
+it on the test set, and overwrites digit_model.keras.
 
-(Create the empty repo on GitHub first, without a README, so there's no
-merge conflict on first push.)
+Known limitations
+
+
+Accuracy on handwriting can be lower than the ~98% test accuracy seen
+during training, since MNIST digits are cleaner and more standardized
+than freehand mouse drawings
+Very thin or very thick strokes, or digits drawn far off-center despite
+the auto-centering, can still occasionally confuse the model
+
+
+License
+
+This project is open source and available for personal or educational use.
