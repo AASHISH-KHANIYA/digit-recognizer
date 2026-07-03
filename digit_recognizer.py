@@ -1,7 +1,5 @@
 """
-=========================================================
         HANDWRITTEN DIGIT RECOGNIZER (LIVE PREDICTION)
-=========================================================
 
 This program allows the user to:
 
@@ -24,39 +22,39 @@ Normalize (0-255 → 0-1)
 Neural Network
       ↓
 Prediction + Confidence
-=========================================================
 """
 
-# -------------------------
 # IMPORT LIBRARIES
-# -------------------------
 
 import tkinter as tk              # GUI
 from PIL import Image, ImageDraw  # Image processing
 import tensorflow as tf           # Load AI model
 import numpy as np                # Arrays & Math
+import sys
+import os
 
 
-# -------------------------
 # LOAD TRAINED MODEL
-# -------------------------
-
-model = tf.keras.models.load_model("digit_model.keras")
 
 
-# -------------------------
+def resource_path(relative_path):
+    """Get the absolute path to a resource, works for dev and for PyInstaller .exe"""
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+model = tf.keras.models.load_model(resource_path("digit_model.keras"))
+
+
 # CREATE MAIN WINDOW
-# -------------------------
 
 root = tk.Tk()
-root.title("🧠 Handwritten Digit Recognizer")
+root.title("Handwritten Digit Recognizer")
 root.geometry("420x520")
 root.configure(bg="#2b2b2b")
 
 
-# -------------------------
 # HEADING
-# -------------------------
 
 title = tk.Label(
     root,
@@ -68,9 +66,7 @@ title = tk.Label(
 title.pack(pady=10)
 
 
-# -------------------------
 # DRAWING CANVAS
-# -------------------------
 
 canvas_width = 280
 canvas_height = 280
@@ -86,17 +82,13 @@ canvas = tk.Canvas(
 canvas.pack()
 
 
-# --------------------------------------------------
 # PIL IMAGE (mirrors the canvas so we can read pixels)
-# --------------------------------------------------
 
 image = Image.new("L", (canvas_width, canvas_height), color=0)
 draw = ImageDraw.Draw(image)
 
 
-# -------------------------
 # RESULT LABEL
-# -------------------------
 
 result_label = tk.Label(
     root,
@@ -108,17 +100,13 @@ result_label = tk.Label(
 result_label.pack(pady=10)
 
 
-# -------------------------
 # STATE
-# -------------------------
 
 predict_job = None       # holds the scheduled "after" call so we can cancel/reschedule it
 last_x, last_y = None, None   # tracks the previous point in the current stroke
 
 
-# -------------------------
 # DRAW FUNCTION
-# -------------------------
 
 def paint(event):
     """
@@ -188,9 +176,7 @@ canvas.bind("<B1-Motion>", paint)
 canvas.bind("<ButtonRelease-1>", reset_stroke)
 
 
-# -------------------------
 # PREDICT FUNCTION
-# -------------------------
 
 def predict():
 
@@ -237,9 +223,7 @@ def predict():
     )
 
 
-# -------------------------
 # CLEAR FUNCTION
-# -------------------------
 
 def clear_canvas():
     global predict_job, last_x, last_y
@@ -261,9 +245,7 @@ def clear_canvas():
     result_label.config(text="Start drawing...")
 
 
-# -------------------------
 # BUTTON FRAME
-# -------------------------
 
 button_frame = tk.Frame(root, bg="#2b2b2b")
 button_frame.pack(pady=10)
@@ -280,8 +262,6 @@ clear_button = tk.Button(
 clear_button.grid(row=0, column=0, padx=10)
 
 
-# -------------------------
 # START APPLICATION
-# -------------------------
 
 root.mainloop()

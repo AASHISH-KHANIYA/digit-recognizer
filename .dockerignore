@@ -1,8 +1,0 @@
-__pycache__/
-*.pyc
-.git/
-.gitignore
-README.md
-debug_input.png
-*.ipynb
-.ipynb_checkpoints/

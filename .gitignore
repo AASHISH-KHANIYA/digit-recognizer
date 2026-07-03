@@ -4,3 +4,7 @@ __pycache__/
 debug_input.png
 .DS_Store
 venv/
+build/
+dist/
+*.spec
+
